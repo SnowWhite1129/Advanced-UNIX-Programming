@@ -1,0 +1,4 @@
+/home/seed/Downloads/clion-2019.1.2/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" "/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming"
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug

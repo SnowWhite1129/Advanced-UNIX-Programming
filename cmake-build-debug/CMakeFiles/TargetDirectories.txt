@@ -1,0 +1,3 @@
+/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug/CMakeFiles/Advanced-UNIX-Programming.dir
+/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug/CMakeFiles/edit_cache.dir
