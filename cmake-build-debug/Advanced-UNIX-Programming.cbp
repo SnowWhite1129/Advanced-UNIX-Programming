@@ -87,6 +87,9 @@
 		<Unit filename="/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/netstat.cpp">
 			<Option target="Advanced-UNIX-Programming"/>
 		</Unit>
+		<Unit filename="/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/test.cpp">
+			<Option target="Advanced-UNIX-Programming"/>
+		</Unit>
 		<Unit filename="/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>

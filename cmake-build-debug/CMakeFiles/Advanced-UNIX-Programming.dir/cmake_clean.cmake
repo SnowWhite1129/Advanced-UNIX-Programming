@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/Advanced-UNIX-Programming.dir/netstat.cpp.o"
+  "CMakeFiles/Advanced-UNIX-Programming.dir/test.cpp.o"
   "Advanced-UNIX-Programming.pdb"
   "Advanced-UNIX-Programming"
 )
