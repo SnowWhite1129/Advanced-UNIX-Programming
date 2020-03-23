@@ -86,6 +86,7 @@ void ReadConnetcion(string filename) {
         if (fgets(line, MAX_LINE, input) != nullptr){
             Connection connection;
             connection.Read(line);
+            connection.protocol = filename;
             connections.push_back(connection);
         }
     }
