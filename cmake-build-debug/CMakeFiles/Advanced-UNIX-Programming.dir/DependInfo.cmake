@@ -4,8 +4,8 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/netstat.cpp" "/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug/CMakeFiles/Advanced-UNIX-Programming.dir/netstat.cpp.o"
-  "/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/test.cpp" "/media/seed/DATA/交大課程/02碩一(下)/01 Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug/CMakeFiles/Advanced-UNIX-Programming.dir/test.cpp.o"
+  "D:/03NCTU/02/01Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/netstat.cpp" "D:/03NCTU/02/01Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug/CMakeFiles/Advanced-UNIX-Programming.dir/netstat.cpp.obj"
+  "D:/03NCTU/02/01Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/test.cpp" "D:/03NCTU/02/01Advanced UNIX Programming/03HW/Advanced-UNIX-Programming/cmake-build-debug/CMakeFiles/Advanced-UNIX-Programming.dir/test.cpp.obj"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

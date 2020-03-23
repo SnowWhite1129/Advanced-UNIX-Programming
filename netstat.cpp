@@ -154,16 +154,21 @@ void Compare(){
 		}
 	}
 }
-void Display(bool TCP, bool UDP, string filter){
-    if (TCP){
-    	printf("List of TCP connections:\n");
-    	printf("%s %-20s %-20s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
-    	for (int i = 0; i < connections.size(); ++i) {
-            connections.at(i).Print();
-    	}
+void Display(){
+    int pos=0;
+    if (connections.at(0).protocol.find("tcp")!=string::npos){
+        printf("List of TCP connections:\n");
+        printf("%s %-20s %-20s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
+        for (; pos < connections.size(); ++pos) {
+            connections.at(pos).Print();
+        }
     }
-    if (UDP){
-	printf("\n");
+    if (pos != connections.size()){
+        printf("List of UDP connections:\n");
+        printf("%s %-20s %-20s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
+        for (; pos < connections.size(); ++pos) {
+            connections.at(pos).Print();
+        }
     }
 }
 
