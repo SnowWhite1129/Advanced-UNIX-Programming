@@ -143,13 +143,27 @@ void Process::Readinode(string filename) {
     }
 }
 void Compare(){
-
+	for(int i=0; i<connections.size();++i){
+		for(int j=0; j<processes.size();++j){
+			for(int k=0;k<processes.at(j).inode.size();++k){
+				if(connections.at(i).inode == processes.at(j).inode.at(k)){
+					connections.at(i).pid - processes.at(j).pid;
+					break;
+				}
+			}
+		}
+	}
 }
-void Display(){
-    printf("List of TCP connections:\n");
-    printf("%s %-20s %-20s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
-    for (int i = 0; i < connections.size(); ++i) {
-        connections.at(i).Print();
+void Display(bool TCP, bool UDP, string filter){
+    if (TCP){
+    	printf("List of TCP connections:\n");
+    	printf("%s %-20s %-20s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
+    	for (int i = 0; i < connections.size(); ++i) {
+            connections.at(i).Print();
+    	}
+    }
+    if (UDP){
+	printf("\n");
     }
 }
 
@@ -157,6 +171,7 @@ void Display(){
 int main(int argc, char **argv)
 {
     /*
+    bool TCP=false, UDP=false;
     string filter;
     const char optstring[] = "tu";
     struct option opts[] = {
@@ -171,16 +186,23 @@ int main(int argc, char **argv)
             case 't':
                 ReadConnetcion("/proc/net/tcp");
                 ReadConnetcion("/proc/net/tcp6");
+		TCP = true;
                 break;
             case 'u':
                 ReadConnetcion("/proc/net/udp");
                 ReadConnetcion("/proc/net/udp6");
-                break;
-            case '?':
-                //TODO: filter = ?;
+		UDP = true;
                 break;
         }
     }
+	if (!TCP && !UDP){
+		ReadConnection("/proc/net/tcp");
+		ReadConnection("/proc/net/tcp6");
+		ReadConnection("/proc/net/udp");
+		ReadConnection("/proc/net/udp6");
+		TCP = true;
+		UDP = true;
+	}
     */
 
 	DIR *dirp = opendir("/proc");
@@ -209,5 +231,6 @@ int main(int argc, char **argv)
 		}
 		closedir(dirp);
 	}
-
+	Compare();
+	Display();
 }
