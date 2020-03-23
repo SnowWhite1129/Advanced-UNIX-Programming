@@ -17,6 +17,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <getopt.h>
+#include <regex>
 
 #define MAX_LINE 1024
 using namespace std;
@@ -47,7 +48,22 @@ vector <Connection> connections;
 vector <Process> processes;
 
 void Connection::Print() {
-    printf("%-6s %-8s:%-4u %-8s:%-4u %d/%s\n", protocol.c_str(), address[0].IP, address[0].port, address[1].IP, address[1].port, pid, program);
+    string l = address[local].IP;
+    l += ":";
+    if (address[local].port != 0){
+    	l += to_string(address[local].port);
+    } else {
+	l += "*";
+    }
+    string r = address[remote].IP;
+    r += ":";
+    if (address[remote].port != 0){
+    	r += to_string(address[remote].port);
+    } else{
+	r += "*";
+    }
+    //printf("%-5s %-15s:%-5u %-15s:%-5u %d/%s\n", protocol.c_str(), address[0].IP, address[0].port, address[1].IP, address[1].port, pid, program);
+    printf("%-5s %-23s %-23s %d/%s\n", protocol.c_str(), l.c_str(), r.c_str(), pid, program);
 }
 void Connection::Read(string line) {
     istringstream iss(line);
@@ -56,23 +72,40 @@ void Connection::Read(string line) {
     for (int i = 0; i < 9; ++i) {
         if (iss >> tmp){
             if (i == 0 || i == 1) {
-                string IP = tmp.substr(0, 8);
-                string port = tmp.substr(9, 13);
-                struct in_addr ip_addr;
-                ip_addr.s_addr = (uint32_t) strtoul(IP.c_str(), nullptr, 16);
-                strcpy(address[i].IP, inet_ntoa(ip_addr));
-                address[i].port = (uint32_t) strtoul(port.c_str(), nullptr, 16);
+		if (protocol.find("6")==string::npos){
+                	string IP = tmp.substr(0, 8);
+                	string port = tmp.substr(9, 13);
+		
+                	struct in_addr ip_addr;
+	                ip_addr.s_addr = (uint32_t) strtoul(IP.c_str(), nullptr, 16);
+        	        strcpy(address[i].IP, inet_ntoa(ip_addr));
+                	address[i].port = (uint32_t) strtoul(port.c_str(), nullptr, 16);
+		} else {
+			int pos=0;
+			string IP[4];
+		       	for (int j=0 ;j<4; ++j, pos+=8){
+				IP[j] = tmp.substr(pos, 8);
+			}
+			string port = tmp.substr(pos+1);
+
+			struct in6_addr ip_addr;
+			for (int j=0;j<4;++j){
+				ip_addr.__in6_u.__u6_addr32[j] = (uint32_t) strtoul(IP[j].c_str(), nullptr, 16);
+			}
+			inet_ntop(AF_INET6, &ip_addr.__in6_u, address[i].IP, 16);
+			address[i].port = (uint32_t) strtoul(port.c_str(), nullptr, 16);
+		}
             }
             if (i == 8){
                 inode = stoi(tmp);
             }
         }
     }
-    // printf("IP Address = %s %u Inode: %u\n", address[0].IP, address[0].port, inode);
+//    printf("IP Address = %s %u Inode: %u\n", address[0].IP, address[0].port, inode);
 }
-void ReadConnetcion(string filename) {
+void ReadConnection(string protocol) {
     FILE *input;
-    filename = "/proc/net/" + filename;
+    string filename = "/proc/net/" + protocol;
     input = fopen(filename.c_str(), "r");
 
     if (!input){
@@ -85,8 +118,8 @@ void ReadConnetcion(string filename) {
     while (!feof(input)){
         if (fgets(line, MAX_LINE, input) != nullptr){
             Connection connection;
+	    connection.protocol = protocol;
             connection.Read(line);
-            connection.protocol = filename;
             connections.push_back(connection);
         }
     }
@@ -100,7 +133,16 @@ void Process::ReadProgram(string filename){
     input = fopen(filename.c_str(), "r");
 
     fgets(program, MAX_LINE, input);
-    // printf("program: %s\n", program);
+    bool split = false;
+    for(int i=0; i<MAX_LINE;++i){
+	if(!split && program[i]=='\0'){
+	    program[i] = ' ';
+	    split = true;
+	} else if (program[i] != '\0'){
+	    split = false;
+	}
+    }
+//    printf("program: %s\n", program);
 
     fclose(input);
 }
@@ -118,9 +160,7 @@ void Process::Readinode(string filename) {
                 string dir = filename;
                 dir += name;
 
-                //cout << dir << endl;
-
-                pid = stoi(name);
+//                cout << dir << endl;
 
                 struct stat status;
                 if (stat(dir.c_str(), &status) == 0){
@@ -145,28 +185,42 @@ void Process::Readinode(string filename) {
 }
 void Compare(){
 	for(int i=0; i<connections.size();++i){
+		connections.at(i).pid = 0;
+		strcpy(connections.at(i).program, "permission denied");
 		for(int j=0; j<processes.size();++j){
 			for(int k=0;k<processes.at(j).inode.size();++k){
 				if(connections.at(i).inode == processes.at(j).inode.at(k)){
-					connections.at(i).pid - processes.at(j).pid;
+					connections.at(i).pid = processes.at(j).pid;
+					strcpy(connections.at(i).program, processes.at(j).program);
 					break;
-				}
+				} 
 			}
 		}
 	}
 }
-void Display(){
+void Display(string filter){
     int pos=0;
     if (connections.at(0).protocol.find("tcp")!=string::npos){
         printf("List of TCP connections:\n");
-        printf("%s %-20s %-20s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
-        for (; pos < connections.size(); ++pos) {
-            connections.at(pos).Print();
-        }
+        printf("%s %-23s %-23s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
+	
+	if (!filter.empty()){
+	    regex cmd_regex(filter);
+	    smatch sm;
+	    
+	    if (regex_search(, sm, cmd_regex)){
+			
+	    }
+	}
+	else{
+            for (; pos < connections.size(); ++pos) {
+            	connections.at(pos).Print();
+            }
+	}
     }
     if (pos != connections.size()){
         printf("List of UDP connections:\n");
-        printf("%s %-20s %-20s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
+        printf("%s %-23s %-23s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
         for (; pos < connections.size(); ++pos) {
             connections.at(pos).Print();
         }
@@ -176,9 +230,7 @@ void Display(){
 
 int main(int argc, char **argv)
 {
-    /*
-    bool TCP=false, UDP=false;
-    string filter;
+	bool TCP = false, UDP = false;
     const char optstring[] = "tu";
     struct option opts[] = {
             {"tcp", 0, nullptr, 't'},
@@ -190,31 +242,37 @@ int main(int argc, char **argv)
         Connection connection;
         switch (c){
             case 't':
-                ReadConnetcion("/proc/net/tcp");
-                ReadConnetcion("/proc/net/tcp6");
+                ReadConnection("tcp");
+                ReadConnection("tcp6");
 		TCP = true;
                 break;
             case 'u':
-                ReadConnetcion("/proc/net/udp");
-                ReadConnetcion("/proc/net/udp6");
+                ReadConnection("udp");
+                ReadConnection("udp6");
 		UDP = true;
                 break;
         }
     }
 	if (!TCP && !UDP){
-		ReadConnection("/proc/net/tcp");
-		ReadConnection("/proc/net/tcp6");
-		ReadConnection("/proc/net/udp");
-		ReadConnection("/proc/net/udp6");
+		ReadConnection("tcp");
+		ReadConnection("tcp6");
+		ReadConnection("udp");
+		ReadConnection("udp6");
 		TCP = true;
 		UDP = true;
 	}
-    */
+	string filter;
+	for (int i=0; i<argc;++i){
+		if(argv[i][0] != '-'){
+			filter = argv[i];
+		}
+	}
+    
 
 	DIR *dirp = opendir("/proc");
 	if (dirp){
 	    Connection connection;
-	    ReadConnetcion("tcp");
+	    
 
 		struct dirent *direntp;
 		while( (direntp = readdir(dirp)) != nullptr ){
@@ -223,12 +281,16 @@ int main(int argc, char **argv)
 		    if (isdigit(name[0])){
 		        // printf("%s\n", direntp->d_name);
 
-                string dir = "/proc/";
-                dir += name;
-                dir += "/";
+                	string dir = "/proc/";
+	                dir += name;
+        	        dir += "/";
 
+//			cout << dir << endl;
+			
 		        Process process;
 		        process.ReadProgram(dir);
+			process.pid = atoi(name);
+			// printf("%d\n", process.pid);
 
 		        string fdname = dir + "fd/";
 		        process.Readinode(fdname);
@@ -238,5 +300,5 @@ int main(int argc, char **argv)
 		closedir(dirp);
 	}
 	Compare();
-	Display();
+	Display(filter);
 }
