@@ -26,6 +26,7 @@ struct Address{
 #define remote 1
     char IP[16];
     uint32_t port;
+    string Message();
 };
 struct Connection{
     string protocol;
@@ -35,6 +36,7 @@ struct Connection{
     char program[MAX_LINE];
     void Print();
     void Read(string line);
+    string Message();
 };
 struct Process{
     int pid;
@@ -46,24 +48,30 @@ struct Process{
 
 vector <Connection> connections;
 vector <Process> processes;
-
-void Connection::Print() {
-    string l = address[local].IP;
-    l += ":";
-    if (address[local].port != 0){
-    	l += to_string(address[local].port);
+string Address::Message() {
+    string m = IP;
+    m += ":";
+    if (port != 0){
+        m += to_string(port);
     } else {
-	l += "*";
+        m += "*";
     }
-    string r = address[remote].IP;
-    r += ":";
-    if (address[remote].port != 0){
-    	r += to_string(address[remote].port);
-    } else{
-	r += "*";
-    }
-    //printf("%-5s %-15s:%-5u %-15s:%-5u %d/%s\n", protocol.c_str(), address[0].IP, address[0].port, address[1].IP, address[1].port, pid, program);
-    printf("%-5s %-23s %-23s %d/%s\n", protocol.c_str(), l.c_str(), r.c_str(), pid, program);
+    return m;
+}
+string Connection::Message() {
+    string m = protocol;
+    m += ' ';
+    m += address[local].Message();
+    m += ' ';
+    m += address[remote].Message();
+    m += ' ';
+    m += to_string(pid);
+    m += ' ';
+    m += program;
+    return m;
+}
+void Connection::Print() {
+    printf("%-5s %-23s %-23s %d/%s\n", protocol.c_str(), address[local].Message().c_str(), address[remote].Message().c_str(), pid, program);
 }
 void Connection::Read(string line) {
     istringstream iss(line);
@@ -72,29 +80,29 @@ void Connection::Read(string line) {
     for (int i = 0; i < 9; ++i) {
         if (iss >> tmp){
             if (i == 0 || i == 1) {
-		if (protocol.find("6")==string::npos){
-                	string IP = tmp.substr(0, 8);
-                	string port = tmp.substr(9, 13);
-		
-                	struct in_addr ip_addr;
-	                ip_addr.s_addr = (uint32_t) strtoul(IP.c_str(), nullptr, 16);
-        	        strcpy(address[i].IP, inet_ntoa(ip_addr));
-                	address[i].port = (uint32_t) strtoul(port.c_str(), nullptr, 16);
-		} else {
-			int pos=0;
-			string IP[4];
-		       	for (int j=0 ;j<4; ++j, pos+=8){
-				IP[j] = tmp.substr(pos, 8);
-			}
-			string port = tmp.substr(pos+1);
+                if (protocol.find('6')==string::npos){
+                    string IP = tmp.substr(0, 8);
+                    string port = tmp.substr(9, 13);
 
-			struct in6_addr ip_addr;
-			for (int j=0;j<4;++j){
-				ip_addr.__in6_u.__u6_addr32[j] = (uint32_t) strtoul(IP[j].c_str(), nullptr, 16);
-			}
-			inet_ntop(AF_INET6, &ip_addr.__in6_u, address[i].IP, 16);
-			address[i].port = (uint32_t) strtoul(port.c_str(), nullptr, 16);
-		}
+                    struct in_addr ip_addr;
+                    ip_addr.s_addr = (uint32_t) strtoul(IP.c_str(), nullptr, 16);
+                    strcpy(address[i].IP, inet_ntoa(ip_addr));
+                    address[i].port = (uint32_t) strtoul(port.c_str(), nullptr, 16);
+                } else {
+                    int pos=0;
+                    string IP[4];
+                        for (int j=0 ;j<4; ++j, pos+=8){
+                        IP[j] = tmp.substr(pos, 8);
+                    }
+                    string port = tmp.substr(pos+1);
+
+                    struct in6_addr ip_addr;
+                    for (int j=0;j<4;++j){
+                        ip_addr.__in6_u.__u6_addr32[j] = (uint32_t) strtoul(IP[j].c_str(), nullptr, 16);
+                    }
+                    inet_ntop(AF_INET6, &ip_addr.__in6_u, address[i].IP, 16);
+                    address[i].port = (uint32_t) strtoul(port.c_str(), nullptr, 16);
+		        }
             }
             if (i == 8){
                 inode = stoi(tmp);
@@ -135,12 +143,12 @@ void Process::ReadProgram(string filename){
     fgets(program, MAX_LINE, input);
     bool split = false;
     for(int i=0; i<MAX_LINE;++i){
-	if(!split && program[i]=='\0'){
-	    program[i] = ' ';
-	    split = true;
-	} else if (program[i] != '\0'){
-	    split = false;
-	}
+        if(!split && program[i]=='\0'){
+            program[i] = ' ';
+            split = true;
+        } else if (program[i] != '\0'){
+            split = false;
+        }
     }
 //    printf("program: %s\n", program);
 
@@ -154,13 +162,8 @@ void Process::Readinode(string filename) {
             char name[MAX_LINE];
             strcpy(name, direntp->d_name);
             if (isdigit(name[0])) {
-
-                //printf("%s\n", direntp->d_name);
-
                 string dir = filename;
                 dir += name;
-
-//                cout << dir << endl;
 
                 struct stat status;
                 if (stat(dir.c_str(), &status) == 0){
@@ -172,8 +175,6 @@ void Process::Readinode(string filename) {
                             end = number.find(']');
                         number = number.substr(start+1, end-start-1);
                         inode.push_back(stoi(number));
-                        //cout << number << endl;
-                        //printf("%s\n", line);
                     }
                 } else{
                     printf("ERROR\n");
@@ -204,19 +205,20 @@ void Display(string filter){
         printf("List of TCP connections:\n");
         printf("%s %-23s %-23s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
 	
-	if (!filter.empty()){
-	    regex cmd_regex(filter);
-	    smatch sm;
-	    
-	    if (regex_search(, sm, cmd_regex)){
-			
-	    }
-	}
-	else{
+        if (!filter.empty()){
+            regex cmd_regex(filter);
+            smatch sm;
             for (; pos < connections.size(); ++pos) {
-            	connections.at(pos).Print();
+                if (regex_search(connections.at(pos).Message(), sm, cmd_regex)){
+                    connections.at(pos).Print();
+                }
             }
-	}
+        }
+        else{
+            for (; pos < connections.size(); ++pos) {
+                connections.at(pos).Print();
+            }
+        }
     }
     if (pos != connections.size()){
         printf("List of UDP connections:\n");
@@ -233,24 +235,24 @@ int main(int argc, char **argv)
 	bool TCP = false, UDP = false;
     const char optstring[] = "tu";
     struct option opts[] = {
-            {"tcp", 0, nullptr, 't'},
-            {"udp", 0, nullptr, 'u'},
-            {0, 0, 0, 0}
+        {"tcp", 0, nullptr, 't'},
+        {"udp", 0, nullptr, 'u'},
+        {0, 0, 0, 0}
     };
     int c;
     while((c = getopt_long(argc, argv, optstring, opts, nullptr)) != -1) {
         Connection connection;
         switch (c){
-            case 't':
-                ReadConnection("tcp");
-                ReadConnection("tcp6");
-		TCP = true;
-                break;
-            case 'u':
-                ReadConnection("udp");
-                ReadConnection("udp6");
-		UDP = true;
-                break;
+        case 't':
+            ReadConnection("tcp");
+            ReadConnection("tcp6");
+		    TCP = true;
+            break;
+        case 'u':
+            ReadConnection("udp");
+            ReadConnection("udp6");
+		    UDP = true;
+            break;
         }
     }
 	if (!TCP && !UDP){
@@ -258,8 +260,6 @@ int main(int argc, char **argv)
 		ReadConnection("tcp6");
 		ReadConnection("udp");
 		ReadConnection("udp6");
-		TCP = true;
-		UDP = true;
 	}
 	string filter;
 	for (int i=0; i<argc;++i){
@@ -267,12 +267,10 @@ int main(int argc, char **argv)
 			filter = argv[i];
 		}
 	}
-    
 
 	DIR *dirp = opendir("/proc");
 	if (dirp){
 	    Connection connection;
-	    
 
 		struct dirent *direntp;
 		while( (direntp = readdir(dirp)) != nullptr ){
@@ -281,16 +279,13 @@ int main(int argc, char **argv)
 		    if (isdigit(name[0])){
 		        // printf("%s\n", direntp->d_name);
 
-                	string dir = "/proc/";
-	                dir += name;
-        	        dir += "/";
+                string dir = "/proc/";
+                dir += name;
+                dir += "/";
 
-//			cout << dir << endl;
-			
 		        Process process;
 		        process.ReadProgram(dir);
-			process.pid = atoi(name);
-			// printf("%d\n", process.pid);
+			    process.pid = atoi(name);
 
 		        string fdname = dir + "fd/";
 		        process.Readinode(fdname);
