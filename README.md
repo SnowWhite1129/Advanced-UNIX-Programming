@@ -1,47 +1,48 @@
 # Advanced-UNIX-Programming
-Implement a 'netstat -nap'-like program
-In this homework, you have to implement a 'netstat -nap' tool by yourself. You have to list all the existing TCP and UDP connections. For each identified connection (socket descriptor), find the corresponding process name and its command lines that creates the connection (socket descriptor). You have to implement all the features by yourself and cannot make calls to the system built-in netstat program nor parse output from 'netstat -nap'. Your codes must be implemented in C and/or C++.
+## Implement a 'netstat -nap'-like program
+In this homework, you have to implement a 'netstat -nap' tool by yourself. You have to list all the existing TCP and UDP connections. For each identified connection (socket descriptor), find the corresponding process name and its command lines that creates the connection (socket descriptor). **You have to implement all the features by yourself and cannot make calls to the system built-in netstat program nor parse output from 'netstat -nap'. Your codes must be implemented in C and/or C++.**
 
 To provide more flexibilities, your program have to accept several predefined options, including
-
--t or --tcp: list only TCP connections.
--u or --udp: list only UDP connections.
-An optional string to list only command lines that containing the string.
+- -t or --tcp: list only TCP connections.
+- -u or --udp: list only UDP connections.
+- An optional **string** to list only command lines that containing the **string**.
 If both -t and -u are provided, you should ignore the two options. You have to handle the additional options using getopt_long function. In short, the synopsis of homework #1 would be:
+```
 $ ./hw1 [-t|--tcp] [-u|--udp] [filter-string]
+```
 When no argument is given, your program should output all identified connections. You may test your program with a root account so that your program would be able to access /proc files owned by other users.
 Your program must work well for both regular users and the superuser (root). Any errors returned from library functions should be handeled properly.
 
-Grading
+## Grading
 The tentative grading policy for this homework is listed below:
 
-[10%] List TCP and UDP connetions (IPv4).
-[10%] List TCP and UDP connetions (IPv6).
-[30%] Show corresponding program names and arguments for each identified connection.
-[10%] Implement -u and --udp option using getopt_long(3).
-[10%] Implement -t and --tcp option using getopt_long(3).
-[10%] Translate network address into user-friendly formats, e.g., from 0100007F to 127.0.0.1, and from FE01A8C0 to 192.168.1.254.
-[10%] Implement basic command line string filter feature.
-[10%] Use Makefile to manage the building process of your program.
-[10%] If your command line string filter supports regular expression, see regex(3).
+- [10%] List TCP and UDP connetions (IPv4).
+- [10%] List TCP and UDP connetions (IPv6).
+- [30%] Show corresponding program names and arguments for each identified connection.
+- [10%] Implement -u and --udp option using getopt_long(3).
+- [10%] Implement -t and --tcp option using getopt_long(3).
+- [10%] Translate network address into user-friendly formats, e.g., from 0100007F to 127.0.0.1, and from FE01A8C0 to 192.168.1.254.
+- [10%] Implement basic command line string filter feature.
+- [10%] Use Makefile to manage the building process of your program.
+- [10%] If your command line string filter supports regular expression, see regex(3).
 
-Homework Submission
+## Homework Submission
 Please submit your homework via the E3 system. Please pack all your Makefile and source code files in a single .tar.gz archive. Scores will be graded based on the completeness of your implementation.
 
-Hints
+## Hints
 We have some hints for you to implement this homework.
-Look at the two files /proc/net/tcp and /proc/net/udp, and google for relevant information. Well, the file format is not difficult to understand.
-Read files in /proc/[pid]/fd
-Traverse all /proc/[pid]/fd directories and identify socket descriptors. The socket descriptors are actually symbolic links point to 'socket:[inode]' or '[0000]:inode', where inode is the corresponding inode number used in /proc/net/tcp and /proc/net/udp.
-You may need to work with opendir(3), readdir(3), stat(2), and readlink(2)
-For address conversion, you may consider working with inet_ntop(3) function. You may also want to include <netinet/in.h> for in_addr and in6_addr data structure. For how addresses are shown to the users, you may have a look at tcp and tcp6 liunx kernel codes. You can then fill in_addr and in6_addr data structure.
-For the ease of debugging, some sample addresses are shown for you (works on little-endian machines, e.g., i386 and x86_64).
-- IPv4 address: 017AA8C0 <===> 192.168.122.1
-- IPv6 address: BACD0120000000000000000052965732 <===> 2001:cdba::3257:9652
-- IPv6 address: 0000000000000000FFFF0000BF00A8C0 <===> ::ffff:192.168.0.191
+- Look at the two files /proc/net/tcp and /proc/net/udp, and google for relevant information. Well, the file format is not difficult to understand.
+- Read files in /proc/[pid]/fd
+- Traverse all /proc/[pid]/fd directories and identify socket descriptors. The socket descriptors are actually symbolic links point to 'socket:[inode]' or '[0000]:inode', where inode is the corresponding inode number used in /proc/net/tcp and /proc/net/udp.
+- You may need to work with opendir(3), readdir(3), stat(2), and readlink(2)
+- For address conversion, you may consider working with inet_ntop(3) function. You may also want to include <netinet/in.h> for in_addr and in6_addr data structure. For how addresses are shown to the users, you may have a look at tcp and tcp6 liunx kernel codes. You can then fill in_addr and in6_addr data structure.
+- For the ease of debugging, some sample addresses are shown for you (works on little-endian machines, e.g., i386 and x86_64).
+	- IPv4 address: 017AA8C0 <===> 192.168.122.1
+	- IPv6 address: BACD0120000000000000000052965732 <===> 2001:cdba::3257:9652
+	- IPv6 address: 0000000000000000FFFF0000BF00A8C0 <===> ::ffff:192.168.0.191
 
-Samples
-Run the command without any argument
+## Samples
+### Run the command without any argument
 ```
 $ ./hw1
 List of TCP connections:
@@ -102,13 +103,13 @@ udp6  :::913                  :::*                    742/rpcbind
 udp6  :::34193                :::*                    1071/avahi-daemon: 
 udp6  :::18161                :::*                    2559/dhcpd      
 ```
-Run the command with --tcp
+### Run the command with --tcp
 ```
 $ ./hw1 --tcp
 (only show TCP connections)
 ```
 
-Run the command with --tcp and a filter string
+### Run the command with --tcp and a filter string
 ```
 $ ./hw1 --tcp telnet
 List of TCP connections:
