@@ -205,7 +205,6 @@ void Display(string filter){
         printf("%s %-23s %-23s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
 	
         if (!filter.empty()){
-            printf("Not empty\n");
             regex cmd_regex(filter);
             smatch sm;
             for (; pos < connections.size(); ++pos) {
@@ -277,7 +276,7 @@ int main(int argc, char **argv)
 	string filter;
 	for (int i=1; i<argc;++i){
 		if(argv[i][0] != '-'){
-			filter = argv[i];
+			filter += argv[i];
 		}
 	}
 
