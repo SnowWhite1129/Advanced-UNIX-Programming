@@ -19,11 +19,12 @@
 #include <getopt.h>
 #include <regex>
 
-#define MAX_LINE 1024
-using namespace std;
-struct Address{
+#define MAX_LINE 4096
 #define local 0
 #define remote 1
+using namespace std;
+struct Address{
+
     char IP[16];
     uint32_t port;
     string Message();
@@ -109,7 +110,6 @@ void Connection::Read(string line) {
             }
         }
     }
-//    printf("IP Address = %s %u Inode: %u\n", address[0].IP, address[0].port, inode);
 }
 void ReadConnection(string protocol) {
     FILE *input;
@@ -150,7 +150,6 @@ void Process::ReadProgram(string filename){
             split = false;
         }
     }
-//    printf("program: %s\n", program);
 
     fclose(input);
 }
@@ -206,10 +205,12 @@ void Display(string filter){
         printf("%s %-23s %-23s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
 	
         if (!filter.empty()){
+            printf("Not empty\n");
             regex cmd_regex(filter);
             smatch sm;
             for (; pos < connections.size(); ++pos) {
-                if (regex_search(connections.at(pos).Message(), sm, cmd_regex)){
+                string message = connections.at(pos).Message();
+                if (regex_search(message, sm, cmd_regex)){
                     connections.at(pos).Print();
                 }
             }
@@ -223,8 +224,20 @@ void Display(string filter){
     if (pos != connections.size()){
         printf("List of UDP connections:\n");
         printf("%s %-23s %-23s %s", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments\n");
-        for (; pos < connections.size(); ++pos) {
-            connections.at(pos).Print();
+        if (!filter.empty()){
+            regex cmd_regex(filter);
+            smatch sm;
+            for (; pos < connections.size(); ++pos) {
+                string message = connections.at(pos).Message();
+                if (regex_search(message, sm, cmd_regex)){
+                    connections.at(pos).Print();
+                }
+            }
+        }
+        else{
+            for (; pos < connections.size(); ++pos) {
+                connections.at(pos).Print();
+            }
         }
     }
 }
@@ -262,7 +275,7 @@ int main(int argc, char **argv)
 		ReadConnection("udp6");
 	}
 	string filter;
-	for (int i=0; i<argc;++i){
+	for (int i=1; i<argc;++i){
 		if(argv[i][0] != '-'){
 			filter = argv[i];
 		}
@@ -277,8 +290,6 @@ int main(int argc, char **argv)
 		    char name[MAX_LINE];
 		    strcpy(name, direntp->d_name);
 		    if (isdigit(name[0])){
-		        // printf("%s\n", direntp->d_name);
-
                 string dir = "/proc/";
                 dir += name;
                 dir += "/";
